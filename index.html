@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Accueil</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background: #222 url("https://i.postimg.cc/50QfZ2Kw/fond.jpg") no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            height: 100dvh;   /* hauteur réellement visible sur mobile */
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;   /* contenu en bas : la photo reste bien visible */
+            padding-bottom: 7vh;
+            color: white;
+            overflow: hidden;
+        }
+
+        .overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.1); z-index: 1; pointer-events: none; }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            width: 92%;
+            max-width: 380px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ---- Changer le fond d'écran / réglages ---- */
+        .bg-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+            touch-action: manipulation;
+        }
+        .bg-btn svg { width: 20px; height: 20px; fill: #fff; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.6)); }
+        .bg-btn:active { opacity: 1; }
+
+        .bg-menu {
+            position: fixed;
+            top: 52px;
+            right: 12px;
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            min-width: 220px;
+            background: rgba(18, 18, 18, 0.55);
+            -webkit-backdrop-filter: blur(14px);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+        }
+        .bg-menu.open { display: flex; animation: menuIn 0.15s ease-out; }
+        @keyframes menuIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+        .bg-menu button,
+        .bg-menu label {
+            display: block;
+            border: none;
+            background: transparent;
+            padding: 13px 18px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            color: rgba(255, 255, 255, 0.92);
+            text-align: left;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        .bg-menu > * + * { border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .bg-menu button:active,
+        .bg-menu label:active { background: rgba(255, 255, 255, 0.12); }
+
+        #bg-file {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        /* ---- Recherche IA ---- */
+        .ai-search {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .search-bar {
+            background: rgba(255, 255, 255, 0.5);
+            -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+            border-radius: 26px;
+            padding: 12px 20px;
+            display: flex;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+        }
+        .search-bar textarea {
+            width: 100%;
+            border: none;
+            outline: none;
+            resize: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.4;
+            color: #000;
+            max-height: 30vh;
+            overflow-y: auto;
+        }
+
+        .ai-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 14px;
+        }
+
+        .ai-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 11px 12px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.4);
+            -webkit-backdrop-filter: blur(6px);
+            backdrop-filter: blur(6px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .ai-btn:active { transform: scale(0.96); }
+        .ai-btn img { width: 26px; height: 26px; object-fit: contain; }
+
+        /* ---- Raccourcis (générés en JS, toujours symétriques) ---- */
+        .shortcuts {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+            width: 100%;
+        }
+
+        .row {
+            display: flex;
+            justify-content: center;
+            gap: 34px;
+            width: 100%;
+        }
+
+        .logo-link {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            filter: drop-shadow(0 3px 5px rgba(0,0,0,0.4));
+            transition: transform 0.2s;
+            opacity: 0.8;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .logo-link:active { transform: scale(0.9); }
+        .logo-link img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+
+        .logo-link .letter {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: #fff;
+        }
+
+        button.logo-link.add {
+            border: 2px dashed rgba(255,255,255,0.7);
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            color: #fff;
+            font-size: 22px;
+            line-height: 1;
+            font-family: inherit;
+            cursor: pointer;
+        }
+
+        /* ---- Météo ---- */
+        .weather-card {
+            width: 100%;
+            margin-top: 50px;
+            padding: 10px 6px 12px;
+            border-radius: 22px;
+            background: rgba(0, 0, 0, 0.28);
+            -webkit-backdrop-filter: blur(8px);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+        }
+
+        .w-top {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 0 10px;
+        }
+        .w-side {
+            font-size: 26px;
+            line-height: 1;
+            text-decoration: none;
+        }
+        .w-side.left  { justify-self: start; }
+        .w-side.right { justify-self: end; }
+        .w-temp {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .w-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            color: #fff;
+            text-decoration: none;
+        }
+        .w-day {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            font-size: 0.72rem;
+        }
+        .w-day .d { opacity: 0.85; }
+        .w-day .e { font-size: 20px; }
+        .w-day .t { font-weight: 600; }
+        .w-day .m { opacity: 0.7; }
+
+        /* Affiché tant que la météo n'est pas chargée (ou hors connexion) */
+        .w-fallback {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            padding: 6px 0;
+        }
+        .w-fallback a { text-decoration: none; font-size: 28px; opacity: 0.85; }
+
+        @media (max-height: 700px) {
+            .ai-search { margin-bottom: 30px; }
+            .shortcuts { gap: 20px; }
+            .weather-card { margin-top: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="overlay"></div>
+
+<!-- Icône fond d'écran / réglages -->
+<button type="button" class="bg-btn" id="bg-btn" aria-label="Réglages"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+<div class="bg-menu" id="bg-menu">
+    <label for="bg-file">Choisir une photo</label>
+    <button type="button" id="bg-link">Coller un lien d'image</button>
+    <button type="button" id="bg-reset">Fond par défaut</button>
+    <button type="button" id="fav-reset">Réinitialiser les favoris</button>
+</div>
+<input type="file" id="bg-file" accept="image/*">
+
+<div class="container">
+    <div class="ai-search">
+        <div class="search-bar">
+            <textarea id="q" rows="1" placeholder="Poser une question..." autocomplete="off" enterkeyhint="send"></textarea>
+        </div>
+        <div class="ai-buttons">
+            <button type="button" class="ai-btn" id="btn-chatgpt" aria-label="ChatGPT">
+                <img src="https://www.google.com/s2/favicons?sz=128&domain=chatgpt.com" alt="">
+            </button>
+            <button type="button" class="ai-btn" id="btn-claude" aria-label="Claude">
+                <img src="https://www.google.com/s2/favicons?sz=128&domain=claude.ai" alt="">
+            </button>
+            <button type="button" class="ai-btn" id="btn-perplexity" aria-label="Perplexity">
+                <img src="https://www.google.com/s2/favicons?sz=128&domain=perplexity.ai" alt="">
+            </button>
+        </div>
+    </div>
+
+    <div class="shortcuts" id="shortcuts"></div>
+
+    <div class="weather-card" id="weather">
+        <div class="w-fallback">
+            <a href="https://marine.meteoconsult.fr/meteo-marine/bulletin-detaille/port-29/previsions-meteo-nice-aujourdhui">🌤️</a>
+            <a href="https://www.meteoblue.com/fr/meteo/semaine/nice_france_2990440">☁️</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    /* ---------- Recherche ChatGPT / Claude / Perplexity ---------- */
+    var input = document.getElementById('q');
+
+    // Liens web : Android les ouvre dans l'appli quand elle est installée
+    var APPS = {
+        chatgpt: { base: 'https://chatgpt.com/',          param: '?q=' },
+        claude:  { base: 'https://claude.ai/new',         param: '?q=' }
+    };
+
+    function askApp(key) {
+        var text = input.value.trim();
+        var a = APPS[key];
+        var web = (text && a.param) ? a.base + a.param + encodeURIComponent(text) : a.base;
+
+        window.location.href = web;
+    }
+
+    function askChatGPT() { askApp('chatgpt'); }
+    function askClaude()  { askApp('claude'); }
+
+    // Perplexity : inchangé (fonctionne déjà)
+    function askPerplexity() {
+        var text = input.value.trim();
+        window.location.href = text
+            ? 'https://www.perplexity.ai/search?q=' + encodeURIComponent(text)
+            : 'https://www.perplexity.ai/';
+    }
+
+    document.getElementById('btn-chatgpt').addEventListener('click', askChatGPT);
+    document.getElementById('btn-claude').addEventListener('click', askClaude);
+    document.getElementById('btn-perplexity').addEventListener('click', askPerplexity);
+
+    // La touche Entrée envoie vers ChatGPT (remplace par askClaude ou askPerplexity pour changer)
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); askChatGPT(); }
+    });
+
+    // La barre de saisie s'agrandit avec le texte (jusqu'à 30 % de l'écran, puis défilement)
+    function autoGrow() {
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, window.innerHeight * 0.3) + 'px';
+    }
+    input.addEventListener('input', autoGrow);
+    window.addEventListener('pageshow', autoGrow);
+
+    /* ---------- Favoris modifiables ---------- */
+    /* Appui long sur un logo = supprimer. Bouton "+" = ajouter (10 max). */
+    var FAV_KEY = 'accueil_favoris';
+    var MAX_FAVS = 10;
+    var DEFAULT_FAVS = [
+        { u: 'https://www.rfi.fr', d: 'rfi.fr' },
+        { u: 'https://www.huffingtonpost.fr', d: 'huffingtonpost.fr' },
+        { u: 'https://www.ovhcloud.com/fr/mail/', d: 'ovh.com' },
+        { u: 'https://pro.doctolib.fr/signin', d: 'doctolib.fr' },
+        { u: 'https://m.youtube.com', d: 'youtube.com' },
+        { u: 'https://sfar.org/mes-revues/anesthesie-reanimation-anrea/', d: 'sfar.org' },
+        { u: 'https://www.amazon.fr', d: 'amazon.fr' }
+    ];
+
+    function loadFavs() {
+        try {
+            var s = localStorage.getItem(FAV_KEY);
+            if (s) {
+                var a = JSON.parse(s);
+                if (Array.isArray(a)) return a;
+            }
+        } catch (e) {}
+        return DEFAULT_FAVS.slice();
+    }
+
+    var favs = loadFavs();
+
+    function saveFavs() {
+        try { localStorage.setItem(FAV_KEY, JSON.stringify(favs)); } catch (e) {}
+    }
+
+    function removeFav(i) {
+        if (!favs[i]) return;
+        if (confirm('Supprimer ' + favs[i].d + ' des favoris ?')) {
+            favs.splice(i, 1);
+            saveFavs();
+            renderFavs();
+        }
+    }
+
+    function addFav() {
+        var v = prompt("Adresse du site à ajouter (ex : lemonde.fr) :");
+        if (!v) return;
+        v = v.trim();
+        if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
+        var u;
+        try { u = new URL(v); } catch (e) { alert("Adresse invalide."); return; }
+        if (u.hostname.indexOf('.') < 0) { alert("Adresse invalide."); return; }
+        favs.push({ u: u.href, d: u.hostname.replace(/^www\./, '') });
+        saveFavs();
+        renderFavs();
+    }
+
+    function attachLongPress(el, i) {
+        var timer = null, fired = false, sx = 0, sy = 0;
+
+        function trigger() {
+            if (fired) return;
+            fired = true;
+            if (navigator.vibrate) navigator.vibrate(30);
+            removeFav(i);
+        }
+        function cancel() { clearTimeout(timer); }
+
+        // Sur Android, l'appui long déclenche aussi "contextmenu" : on le récupère
+        el.addEventListener('contextmenu', function (e) { e.preventDefault(); trigger(); });
+        el.addEventListener('pointerdown', function (e) {
+            fired = false; sx = e.clientX; sy = e.clientY;
+            timer = setTimeout(trigger, 450);
+        });
+        el.addEventListener('pointerup', cancel);
+        el.addEventListener('pointercancel', cancel);
+        el.addEventListener('pointerleave', cancel);
+        el.addEventListener('pointermove', function (e) {
+            if (Math.abs(e.clientX - sx) > 10 || Math.abs(e.clientY - sy) > 10) cancel();
+        });
+        el.addEventListener('click', function (e) {
+            if (fired) { e.preventDefault(); fired = false; }
+        });
+    }
+
+    function makeLink(f, i) {
+        var a = document.createElement('a');
+        a.className = 'logo-link';
+        a.href = f.u;
+        a.draggable = false;
+
+        var img = new Image();
+        img.alt = '';
+        img.draggable = false;
+        img.onerror = function () {
+            var l = document.createElement('div');
+            l.className = 'letter';
+            l.textContent = (f.d || '?').charAt(0).toUpperCase();
+            if (img.parentNode) img.parentNode.replaceChild(l, img);
+        };
+        img.src = 'https://www.google.com/s2/favicons?sz=128&domain=' + encodeURIComponent(f.d);
+        a.appendChild(img);
+
+        attachLongPress(a, i);
+        return a;
+    }
+
+    function makeAdd() {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'logo-link add';
+        b.setAttribute('aria-label', 'Ajouter un favori');
+        b.textContent = '+';
+        b.addEventListener('click', addFav);
+        return b;
+    }
+
+    function renderFavs() {
+        var box = document.getElementById('shortcuts');
+        box.innerHTML = '';
+
+        var items = favs.map(makeLink);
+        if (favs.length < MAX_FAVS) items.push(makeAdd());
+
+        // Répartition symétrique : moitié / moitié (jusqu'à 4 = une seule ligne)
+        var n = items.length;
+        var first = n <= 4 ? n : Math.ceil(n / 2);
+
+        [items.slice(0, first), items.slice(first)].forEach(function (group) {
+            if (!group.length) return;
+            var row = document.createElement('div');
+            row.className = 'row';
+            group.forEach(function (el) { row.appendChild(el); });
+            box.appendChild(row);
+        });
+    }
+
+    renderFavs();
+
+    /* ---------- Météo 7 jours (Nice) ---------- */
+    /* Données : Open-Meteo (gratuit, sans clé). Un tap ouvre meteoblue, 🌊 ouvre meteoconsult marine. */
+    var LAT = 43.7102, LON = 7.2620;   // Nice — change ces deux valeurs pour une autre ville
+    var METEOBLUE = 'https://www.meteoblue.com/fr/meteo/semaine/nice_france_2990440';
+    var METEOCONSULT = 'https://marine.meteoconsult.fr/meteo-marine/bulletin-detaille/port-29/previsions-meteo-nice-aujourdhui';
+    var WEATHER_KEY = 'accueil_meteo';
+    var WEATHER_TTL = 30 * 60 * 1000;   // rafraîchit toutes les 30 min
+
+    function wmo(c) {
+        if (c === 0) return '☀️';
+        if (c === 1) return '🌤️';
+        if (c === 2) return '⛅';
+        if (c === 3) return '☁️';
+        if (c === 45 || c === 48) return '🌫️';
+        if (c >= 51 && c <= 57) return '🌦️';
+        if (c >= 61 && c <= 67) return '🌧️';
+        if (c >= 71 && c <= 77) return '❄️';
+        if (c >= 80 && c <= 82) return '🌧️';
+        if (c === 85 || c === 86) return '❄️';
+        if (c >= 95) return '⛈️';
+        return '🌡️';
+    }
+
+    function dayLabel(dateStr, index) {
+        if (index === 0) return 'auj';
+        var d = new Date(dateStr + 'T12:00:00');
+        return d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '');
+    }
+
+    function renderWeather(data) {
+        try {
+            var cur = data.current, day = data.daily;
+            var days = '';
+            for (var i = 0; i < day.time.length; i++) {
+                days += '<div class="w-day">' +
+                    '<span class="d">' + dayLabel(day.time[i], i) + '</span>' +
+                    '<span class="e">' + wmo(day.weather_code[i]) + '</span>' +
+                    '<span class="t">' + Math.round(day.temperature_2m_max[i]) + '°</span>' +
+                    '<span class="m">' + Math.round(day.temperature_2m_min[i]) + '°</span>' +
+                    '</div>';
+            }
+            document.getElementById('weather').innerHTML =
+                '<div class="w-top">' +
+                    '<a class="w-side left" href="' + METEOBLUE + '" aria-label="Météo semaine">' + wmo(cur.weather_code) + '</a>' +
+                    '<a class="w-temp" href="' + METEOBLUE + '">' + Math.round(cur.temperature_2m) + '°</a>' +
+                    '<a class="w-side right" href="' + METEOCONSULT + '" aria-label="Météo marine">🌊</a>' +
+                '</div>' +
+                '<a class="w-days" href="' + METEOBLUE + '">' + days + '</a>';
+        } catch (e) {}
+    }
+
+    function loadWeather() {
+        var cached = null;
+        try { cached = JSON.parse(localStorage.getItem(WEATHER_KEY)); } catch (e) {}
+        if (cached && cached.data) renderWeather(cached.data);
+        if (cached && cached.t && Date.now() - cached.t < WEATHER_TTL) return;
+
+        var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + LAT + '&longitude=' + LON +
+                  '&current=temperature_2m,weather_code' +
+                  '&daily=weather_code,temperature_2m_max,temperature_2m_min' +
+                  '&timezone=auto&forecast_days=7';
+
+        fetch(url)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                if (!data || !data.daily || !data.current) return;
+                renderWeather(data);
+                try { localStorage.setItem(WEATHER_KEY, JSON.stringify({ t: Date.now(), data: data })); } catch (e) {}
+            })
+            .catch(function () { /* hors connexion : on garde l'affichage actuel */ });
+    }
+
+    loadWeather();
+
+    /* ---------- Fond d'écran personnalisable ---------- */
+    var DEFAULT_BG = 'https://i.postimg.cc/50QfZ2Kw/fond.jpg';
+    var STORAGE_KEY = 'accueil_fond';
+
+    var bgBtn  = document.getElementById('bg-btn');
+    var bgMenu = document.getElementById('bg-menu');
+    var bgFile = document.getElementById('bg-file');
+
+    function applyBg(src) {
+        document.body.style.backgroundImage = 'url("' + src + '")';
+    }
+
+    function saveBg(src) {
+        try { localStorage.setItem(STORAGE_KEY, src); }
+        catch (e) { alert("Fond appliqué, mais impossible de le mémoriser pour la prochaine fois."); }
+    }
+
+    function closeMenu() { bgMenu.classList.remove('open'); }
+
+    try {
+        var saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) applyBg(saved);
+    } catch (e) {}
+
+    bgBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        bgMenu.classList.toggle('open');
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!bgMenu.contains(e.target) && e.target !== bgBtn) closeMenu();
+    });
+
+    bgFile.addEventListener('change', function () {
+        var file = bgFile.files && bgFile.files[0];
+        if (!file) return;
+
+        var url = URL.createObjectURL(file);
+        var img = new Image();
+        img.onload = function () {
+            var max = 1400;
+            var ratio = Math.min(1, max / Math.max(img.width, img.height));
+            var canvas = document.createElement('canvas');
+            canvas.width  = Math.round(img.width * ratio);
+            canvas.height = Math.round(img.height * ratio);
+            canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+            var data = canvas.toDataURL('image/jpeg', 0.82);
+            URL.revokeObjectURL(url);
+
+            applyBg(data);
+            saveBg(data);
+            closeMenu();
+        };
+        img.onerror = function () {
+            URL.revokeObjectURL(url);
+            alert("Impossible de lire cette image.");
+        };
+        img.src = url;
+        bgFile.value = '';
+    });
+
+    document.getElementById('bg-link').addEventListener('click', function () {
+        closeMenu();
+        var link = prompt("Colle le lien de l'image (https://...) :");
+        if (!link) return;
+        link = link.trim();
+        if (!/^https?:\/\//i.test(link)) {
+            alert("Le lien doit commencer par http:// ou https://");
+            return;
+        }
+        applyBg(link);
+        saveBg(link);
+    });
+
+    document.getElementById('bg-reset').addEventListener('click', function () {
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        applyBg(DEFAULT_BG);
+        closeMenu();
+    });
+
+    document.getElementById('fav-reset').addEventListener('click', function () {
+        closeMenu();
+        if (confirm('Remettre les favoris d\'origine ?')) {
+            favs = DEFAULT_FAVS.slice();
+            saveFavs();
+            renderFavs();
+        }
+    });
+</script>
+
+</body>
+</html>
